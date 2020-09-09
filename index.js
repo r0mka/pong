@@ -1,11 +1,22 @@
 let canvas, ctx;
+const hitPaddleSound = new Audio(
+  'sounds/sport_table_tennis_ping_pong_bat_hit_ball_002.mp3'
+);
+
+const hitWallSound = new Audio(
+  'sounds/sport_table_tennis_ping_pong_ball_bounce_hit_table_003.mp3'
+);
+
+const resetSound = new Audio(
+  'sounds/zapsplat_cartoon_loose_grip_let_go_fall_13365.mp3'
+);
 
 const BLACK = 'rgb(0, 0, 0)';
 const WHITE = 'rgb(255, 255, 255)';
 
 let ballX = 75;
 let ballY = 75;
-let ballSpeedX = -4;
+let ballSpeedX = 4;
 let ballSpeedY = -4;
 
 const PADDLE_LENGTH = 100;
@@ -29,12 +40,33 @@ function colorRect(topLeftX, topLeftY, boxWidth, boxHeight, fillColor) {
   ctx.fillRect(topLeftX, topLeftY, boxWidth, boxHeight);
 }
 
+function randomInteger(min, max) {
+  // функция получения случайного целого числа в диапазоне от min до max
+  // получить случайное число от (min-0.5) до (max+0.5)
+  let rand = min - 0.5 + Math.random() * (max - min + 1);
+  return Math.round(rand);
+}
+
+function resetBall() {
+  ballX = randomInteger(50, canvas.width / 2);
+  ballY = randomInteger(50, canvas.height - 50);
+  ballSpeedX = randomInteger(2, 7);
+  ballSpeedY = randomInteger(2, 7);
+}
 function moveAll() {
   ballX = ballX + ballSpeedX;
   ballY = ballY + ballSpeedY;
   // check ball wall collision
-  if (ballY > canvas.height || ballY < 0) ballSpeedY = -ballSpeedY;
-  if (ballX < 0) ballSpeedX = -ballSpeedX;
+  if (ballY > canvas.height || ballY < 0) {
+    ballSpeedY = -ballSpeedY;
+    hitWallSound.play();
+  }
+
+  if (ballX < 0) {
+    ballSpeedX = -ballSpeedX;
+    hitWallSound.play();
+  }
+
   // проверка на верхний и нижний края
   if (paddleMoveUpPressed && paddleY - PADDLE_SPEED_Y >= 0) {
     paddleY -= PADDLE_SPEED_Y;
@@ -45,6 +77,7 @@ function moveAll() {
   ) {
     paddleY += PADDLE_SPEED_Y;
   }
+
   // check ball paddle collision
   let paddleTopEdgeY = paddleY;
   let paddleBottomEdgeY = paddleTopEdgeY + PADDLE_LENGTH;
@@ -58,6 +91,12 @@ function moveAll() {
     ballY < paddleBottomEdgeY
   ) {
     ballSpeedX = -1.1 * ballSpeedX;
+    hitPaddleSound.play();
+  }
+
+  if (ballX > canvas.width) {
+    resetSound.play();
+    resetBall();
   }
 }
 
@@ -95,7 +134,7 @@ function keyUpHandler(event) {
     paddleMoveDownPressed = false;
   }
 }
-
+// comment
 window.onload = function () {
   canvas = document.getElementById('canvas');
   ctx = canvas.getContext('2d');
